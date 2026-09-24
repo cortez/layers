@@ -1,0 +1,864 @@
+/* ─── Type ────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('https://cdn.cortez.io/fonts/PPNeueMontreal-Book.otf') format('opentype');
+  font-weight: 350;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('https://cdn.cortez.io/fonts/PPNeueMontreal-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Neue Montreal';
+  src: url('https://cdn.cortez.io/fonts/PPNeueMontreal-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-display: swap;
+}
+
+/* ─── Tokens ──────────────────────────────────────────────────────────── */
+
+/* The sky and the ink are set from JS (lib/sky.ts). Registering them lets
+   the gradient and the text colour interpolate as the sky changes. */
+@property --sky-top {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.9 0.02 240);
+}
+@property --sky-bottom {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.95 0.01 90);
+}
+@property --fg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.24 0.012 255);
+}
+
+:root {
+  --fg-2: color-mix(in oklch, var(--fg) 64%, transparent);
+  --fg-3: color-mix(in oklch, var(--fg) 42%, transparent);
+  --fill: color-mix(in oklch, var(--fg) 6%, transparent);
+  --fill-strong: color-mix(in oklch, var(--fg) 10%, transparent);
+  --line-faint: color-mix(in oklch, var(--fg) 8%, transparent);
+  --line: color-mix(in oklch, var(--fg) 16%, transparent);
+  --line-strong: color-mix(in oklch, var(--fg) 34%, transparent);
+  --panel: color-mix(in oklch, var(--sky-bottom) 94%, var(--fg));
+  --accent: oklch(0.6 0.21 28);
+
+  --press: color-mix(in oklch, var(--fg) 18%, transparent);
+
+  --font: 'Neue Montreal', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --gutter: 16px;
+
+  /* Motion: presses are instant, releases ease back */
+  --dur-fast: 200ms;
+  --dur-base: 300ms;
+  --ease: cubic-bezier(0.86, 0, 0.07, 1);
+  --dur-slow: 500ms;
+
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--fg);
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom)) fixed;
+  background-color: var(--sky-bottom);
+  transition:
+    --sky-top 1.5s ease,
+    --sky-bottom 1.5s ease,
+    --fg 1.5s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  /* No grey flash on tap anywhere; pressed states replace it */
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-sky='dark'] {
+  --accent: oklch(0.68 0.19 30);
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: transparent;
+  overscroll-behavior: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--accent) 30%, transparent);
+  color: var(--fg);
+}
+
+/* Pressed: instant on touch, eases back on release. No hover states. */
+.pill,
+.place,
+.notice-action {
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.pill:has(.pill-button:active),
+.place:active,
+.notice-action:active {
+  background: var(--press);
+  transition-duration: 0s;
+}
+
+
+/* ─── Sky ─────────────────────────────────────────────────────────────── */
+
+.sky-fx {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sky-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sky-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(150% 100% at var(--flash-x, 50%) 0%, oklch(0.95 0.02 265), oklch(0.85 0.04 270 / 0.45) 40%, transparent 85%);
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+/* ─── Layout (mobile first) ───────────────────────────────────────────── */
+
+.app {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+}
+
+.app[data-phase='results'] {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app[data-scrubbing] {
+  cursor: ew-resize;
+}
+
+.locate {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+}
+
+.results {
+  display: grid;
+  /* minmax(0, …) so the dial can't widen its own column and measure that */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'bar' 'dial' 'details';
+  gap: 8px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) var(--gutter) calc(32px + env(safe-area-inset-bottom));
+}
+
+.bar {
+  grid-area: bar;
+  display: flex;
+  justify-content: center;
+}
+
+.dial-wrap {
+  grid-area: dial;
+  margin-top: 12px;
+  width: 100%;
+  min-width: 0;
+  max-width: 420px;
+  aspect-ratio: 1;
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+}
+
+.details {
+  grid-area: details;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─── Location pill ───────────────────────────────────────────────────── */
+
+.pill-anchor {
+  --pill-open: min(280px, calc(100vw - 48px));
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  background: var(--fill-strong);
+  overflow: hidden;
+}
+
+.pill[data-open] {
+  width: var(--pill-open);
+}
+
+/* Focus shows as the caret and a slightly deeper fill, not a border */
+.pill:focus-within {
+  background: color-mix(in oklch, var(--fg) 14%, transparent);
+}
+
+.pill-button {
+  height: 100%;
+  padding: 0 26px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.pill-place-text,
+.place-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pill-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px;
+}
+
+.pill-place:disabled {
+  cursor: default;
+}
+
+.suggestion-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* Searching, when it takes a moment: the pill breathes, nothing more */
+@media (prefers-reduced-motion: no-preference) {
+  .pill[data-busy] {
+    animation: pill-breathe 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes pill-breathe {
+  50% {
+    background: var(--fill);
+  }
+}
+
+.pill-input {
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+  padding: 0 26px;
+  border: 0;
+  background: transparent;
+  font-size: 16px; /* 16px keeps iOS from zooming */
+  letter-spacing: -0.01em;
+  outline: none;
+  text-align: center;
+}
+
+.pill-input::placeholder {
+  color: var(--fg-3);
+}
+
+.pill-below {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  translate: -50% 0;
+  width: var(--pill-open);
+  text-align: center;
+}
+
+.suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.suggestion {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 16px;
+  color: var(--fg-2);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.suggestion[aria-hidden='true'] {
+  pointer-events: none;
+  min-height: 0;
+}
+
+.suggestion[data-active] {
+  color: var(--fg);
+}
+
+.suggestion-region {
+  font-size: 13px;
+  color: var(--fg-3);
+}
+
+.locate-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: var(--fg-2);
+}
+
+
+.pill-button:disabled {
+  cursor: default;
+}
+
+.pill-note {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--fg-2);
+  text-wrap: balance;
+}
+
+/* ─── Place ───────────────────────────────────────────────────────────── */
+
+.place {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  align-items: center;
+  background: var(--fill-strong);
+  overflow: hidden;
+}
+
+.place-name {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.place-region {
+  font-size: 13px;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+/* Long names never push the pill off screen: the region gives way first,
+   then the name, each with an ellipsis */
+.place {
+  max-width: calc(100vw - 2 * var(--gutter));
+}
+
+.place-text,
+.pill-place-text {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.place-name,
+.place-region {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.place-region {
+  flex-shrink: 3;
+}
+
+/* ─── Dial ────────────────────────────────────────────────────────────── */
+
+.dial {
+  position: relative;
+}
+
+.dial svg {
+  display: block;
+  overflow: visible;
+  touch-action: none;
+}
+
+.dial-track {
+  fill: none;
+  stroke: var(--fill-strong);
+  stroke-linecap: round;
+}
+
+.dial-night {
+  fill: none;
+  stroke: var(--fill);
+}
+
+.dial-numeral {
+  fill: var(--fg-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dial-arc-stop {
+  /* The run's colour eases as the forecast along it changes */
+  transition: stop-color 0.8s ease;
+}
+
+.dial-arc-glow {
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.dial-arc {
+  fill: none;
+  stroke-linecap: round;
+  cursor: grab;
+}
+
+.dial-handle {
+  outline: none;
+}
+
+.dial-handle[data-start] {
+  fill: var(--sky-bottom);
+}
+
+.dial-handle[data-end] {
+  fill: none;
+  stroke: var(--sky-bottom);
+  stroke-width: 1.5;
+}
+
+.dial-handle:focus-visible {
+  stroke: var(--fg);
+  stroke-width: 2;
+}
+
+.dial-grab {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  cursor: grab;
+}
+
+.dial-hit {
+  fill: transparent;
+  cursor: grab;
+}
+
+.dial-arc,
+.dial-handle {
+  transition: opacity var(--dur-base) var(--ease);
+}
+
+.dial-handle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+/* The handle being held swells so it reads as grabbed */
+.dial[data-dragging='start'] .dial-handle[data-start],
+.dial[data-dragging='end'] .dial-handle[data-end] {
+  transform: scale(1.5);
+}
+
+.dial[data-dragging] svg,
+.dial[data-dragging] .dial-arc,
+.dial[data-dragging] .dial-grab {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  cursor: grab;
+}
+
+.dial-hit {
+  cursor: grabbing;
+}
+
+/* Before there's weather, the run can't be set yet */
+.dial-wrap[data-loading] .dial-arc,
+.dial-wrap[data-loading] .dial-handle {
+  opacity: 0.35;
+}
+
+.dial-wrap[data-loading] [data-no-scrub] {
+  pointer-events: none;
+}
+
+.dial-hint {
+  position: absolute;
+  left: 50%;
+  translate: -50% -50%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--fg-3);
+  text-wrap: balance;
+  pointer-events: none;
+}
+
+.dial-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+/* ─── Reading ─────────────────────────────────────────────────────────── */
+
+.hub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--inner) * 0.02);
+  text-align: center;
+}
+
+.hub-label {
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+.hub-temp {
+  /* A fixed box: the number arriving never moves anything around it */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  font-size: calc(var(--inner) * 0.32);
+  font-weight: 350;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  /* Proportional figures set tighter; NumberFlow animates the width change */
+  font-variant-numeric: proportional-nums;
+  padding-left: 0.1em; /* the degree sign pulls the figure left */
+  white-space: nowrap;
+}
+
+
+/* The temperature is a quiet button: tap to switch °F / °C */
+.hub-temp-button {
+  pointer-events: auto;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.hub-window {
+  display: flex;
+  align-items: baseline;
+  height: 20px;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hub-duration {
+  display: block;
+  height: 18px; /* holds its line while the sky is being checked */
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.hub-arrow {
+  color: var(--fg-3);
+}
+
+.clock {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.clock-meridiem {
+  margin-left: 0.25em;
+}
+
+/* ─── Conditions + list ───────────────────────────────────────────────── */
+
+.conditions {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  min-height: calc(13px * 1.4);
+  font-size: 13px;
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.conditions-text {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: inherit;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.credit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.credit a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sep {
+  color: var(--fg-3);
+}
+
+.wear-list {
+  --row: 56px;
+  --row-gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: var(--row);
+  align-content: start;
+  gap: var(--row-gap) 16px;
+  /* Hold room for the fullest outfit (7 items, 4 rows) so nothing above or
+     beside the list moves when it shrinks */
+  min-height: calc(4 * var(--row) + 3 * var(--row-gap));
+}
+
+.wear {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tile {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--fill-strong);
+  border: 1px solid transparent;
+  transition:
+    background-color 300ms,
+    border-color 300ms,
+    color 300ms;
+}
+
+.wear[data-optional] .tile {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  color: var(--fg-2);
+}
+
+.tile-icon {
+  display: grid;
+  place-items: center;
+}
+
+.tile-img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Optional garments sit back a little, like the dashed tile around them */
+.wear[data-optional] .tile-img {
+  opacity: 0.75;
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.notice-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.notice-body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+  text-wrap: balance;
+}
+
+.notice-action {
+  margin-top: 12px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--fill-strong);
+  font-size: 14px;
+}
+
+.wear-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wear-name {
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.wear-hint {
+  font-size: 12px;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+
+/* Holds the keyboard open on iOS between the tap and the search box */
+.keyboard-stand-in {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  font-size: 16px; /* never triggers zoom */
+  pointer-events: none;
+}
+
+/* ─── Wider screens ───────────────────────────────────────────────────── */
+
+@media (min-width: 900px) {
+  :root {
+    --gutter: 32px;
+  }
+
+  .results {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 'bar bar' 'dial details';
+    align-items: center;
+    column-gap: 64px;
+    max-width: 1120px;
+    min-height: 100dvh;
+    padding-bottom: 32px;
+  }
+
+  .bar {
+    align-self: start;
+    padding-top: 8px;
+  }
+
+  .dial-wrap {
+    max-width: 520px;
+  }
+
+  .conditions {
+    justify-content: flex-start;
+  }
+
+  /* The details column is the dial's height, with its content centred on
+     the dial's optical centre. When the outfit gains or loses a row, it
+     eases to its new place rather than jumping. */
+  .details {
+    align-self: center;
+    height: var(--dial);
+    margin-top: 0;
+    padding-top: var(--details-top);
+    transition: padding-top 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .notice {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
