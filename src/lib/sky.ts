@@ -22,6 +22,8 @@ export interface Sky {
   storm: boolean
   /** 0-1 visible stars (clear night). */
   stars: number
+  /** The horizon colour as sRGB hex, for the browser's own chrome. */
+  tint: string
 }
 
 // Clear sky by hour: [hour, top, bottom]
@@ -47,6 +49,32 @@ function mix(a: LCH, b: LCH, t: number): LCH {
   return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerpHue(a[2], b[2], t)]
 }
 const css = ([l, c, h]: LCH) => `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${h.toFixed(1)})`
+
+/** OKLCH to sRGB hex, clipped to gamut. Safari wants a plain colour for theme-color. */
+function hex([L, C, H]: LCH): string {
+  const a = C * Math.cos((H * Math.PI) / 180)
+  const b = C * Math.sin((H * Math.PI) / 180)
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3
+  const lin = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ]
+  return (
+    '#' +
+    lin
+      .map((v) => {
+        const x = Math.min(1, Math.max(0, v))
+        const g = x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055
+        return Math.round(g * 255)
+          .toString(16)
+          .padStart(2, '0')
+      })
+      .join('')
+  )
+}
 
 function clearAt(hour: number): [LCH, LCH] {
   for (let i = 0; i < CLEAR.length - 1; i++) {
@@ -138,6 +166,7 @@ function finish(top: LCH, bottom: LCH, weather: Weather): Sky {
     bottom: css(bottom),
     ink: dark ? 'oklch(0.97 0.005 250)' : 'oklch(0.24 0.012 255)',
     dark,
+    tint: hex(bottom),
     ...weather,
   }
 }
@@ -151,7 +180,16 @@ export function useSkyTheme(sky: Sky) {
     root.style.setProperty('--fg', sky.ink)
     root.style.colorScheme = sky.dark ? 'dark' : 'light'
     root.dataset.sky = sky.dark ? 'dark' : 'light'
-  }, [sky.top, sky.bottom, sky.ink, sky.dark])
+    // iOS Safari tints the status bar strip and its toolbar with this colour.
+    // It's the horizon colour, which the page shows at both edges (globals.css).
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'theme-color'
+      document.head.append(meta)
+    }
+    meta.content = sky.tint
+  }, [sky.top, sky.bottom, sky.ink, sky.dark, sky.tint])
 }
 
 /** Dark stretches of the next day as [from, to] hours from `now`, for shading the dial. */
