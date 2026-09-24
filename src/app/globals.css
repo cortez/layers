@@ -66,7 +66,9 @@
   line-height: 1.4;
   color: var(--fg);
   background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom)) fixed;
-  background-color: var(--sky-bottom);
+  /* iOS Safari paints the status bar strip with this colour, so it must be
+     the top of the gradient or the strip shows as a hard band */
+  background-color: var(--sky-top);
   transition:
     --sky-top 1.5s ease,
     --sky-bottom 1.5s ease,
@@ -700,9 +702,6 @@ button {
   grid-auto-rows: var(--row);
   align-content: start;
   gap: var(--row-gap) 16px;
-  /* Hold room for the fullest outfit (7 items, 4 rows) so nothing above or
-     beside the list moves when it shrinks */
-  min-height: calc(4 * var(--row) + 3 * var(--row-gap));
 }
 
 .wear {
@@ -844,6 +843,13 @@ button {
 
   .conditions {
     justify-content: flex-start;
+  }
+
+  /* Hold room for the fullest outfit (7 items, 4 rows) so the dial beside
+     the list doesn't move when it shrinks. On a phone the list is last, so
+     the room would only make the page scroll for nothing. */
+  .wear-list {
+    min-height: calc(4 * var(--row) + 3 * var(--row-gap));
   }
 
   /* The details column is the dial's height, with its content centred on

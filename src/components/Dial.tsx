@@ -329,12 +329,25 @@ interface NightProps {
  * overlapping layers (and never lines). A mask fades it in at dusk and out at
  * dawn with smooth gradients, and gives it a rounded end wherever it meets an
  * end of the track, matching the track's own caps.
+ *
+ * Dusk and dawn each take TWILIGHT hours. A night cut off by an end of the
+ * track keeps its full twilight, so a night that has only just begun at +24h
+ * shows as the first part of dusk, faint and still brightening the cap,
+ * rather than a solid dark blob.
  */
 function Night({ id, from, to, thickness, path, point }: NightProps) {
   const atStart = from <= 0.01
   const atEnd = to >= MAX_HOURS_AHEAD - 0.01
-  const fadeIn = atStart ? 0 : Math.min(TWILIGHT, (to - from) / 2)
-  const fadeOut = atEnd ? 0 : Math.min(TWILIGHT, (to - from) / 2)
+  const length = to - from
+  // A short night in the open meets its two twilights in the middle
+  const inSpan = atStart ? 0 : atEnd ? TWILIGHT : Math.min(TWILIGHT, length / 2)
+  const outSpan = atEnd ? 0 : atStart ? TWILIGHT : Math.min(TWILIGHT, length / 2)
+  const inEnd = Math.min(to, from + inSpan) // where the drawn dusk ramp stops
+  const outStart = Math.max(from, to - outSpan) // where the drawn dawn ramp begins
+  const solid = outStart > inEnd
+  // The ramp reaches the track's end: its own round cap carries the fade
+  const inCapped = atEnd && !solid && inSpan > 0
+  const outCapped = atStart && !solid && outSpan > 0
   // Mask strokes run a little wider than the ring so its edges stay crisp
   const w = thickness + 2
   const ramp = (h0: number, h1: number, key: string) => {
@@ -353,19 +366,39 @@ function Night({ id, from, to, thickness, path, point }: NightProps) {
   return (
     <>
       <defs>
-        {fadeIn > 0 && ramp(from, from + fadeIn, 'in')}
-        {fadeOut > 0 && ramp(to, to - fadeOut, 'out')}
+        {inSpan > 0 && ramp(from, from + inSpan, 'in')}
+        {outSpan > 0 && ramp(to, to - outSpan, 'out')}
         <mask id={`${id}-mask`} maskUnits="userSpaceOnUse">
-          <path
-            d={path(from + fadeIn - (fadeIn ? overlap : 0), to - fadeOut + (fadeOut ? overlap : 0))}
-            stroke="white"
-            strokeWidth={w}
-            fill="none"
-          />
-          {fadeIn > 0 && <path d={path(from, from + fadeIn)} stroke={`url(#${id}-in)`} strokeWidth={w} fill="none" />}
-          {fadeOut > 0 && <path d={path(to - fadeOut, to)} stroke={`url(#${id}-out)`} strokeWidth={w} fill="none" />}
-          {atStart && <path d={path(0, 0.001)} stroke="white" strokeWidth={thickness} strokeLinecap="round" fill="none" />}
-          {atEnd && (
+          {solid && (
+            <path
+              d={path(inSpan ? inEnd - overlap : from, outSpan ? outStart + overlap : to)}
+              stroke="white"
+              strokeWidth={w}
+              fill="none"
+            />
+          )}
+          {inSpan > 0 && (
+            <path
+              d={path(from, inEnd)}
+              stroke={`url(#${id}-in)`}
+              strokeWidth={inCapped ? thickness : w}
+              strokeLinecap={inCapped ? 'round' : 'butt'}
+              fill="none"
+            />
+          )}
+          {outSpan > 0 && (
+            <path
+              d={path(outStart, to)}
+              stroke={`url(#${id}-out)`}
+              strokeWidth={outCapped ? thickness : w}
+              strokeLinecap={outCapped ? 'round' : 'butt'}
+              fill="none"
+            />
+          )}
+          {atStart && !outCapped && (
+            <path d={path(0, 0.001)} stroke="white" strokeWidth={thickness} strokeLinecap="round" fill="none" />
+          )}
+          {atEnd && !inCapped && (
             <path
               d={path(MAX_HOURS_AHEAD - 0.001, MAX_HOURS_AHEAD)}
               stroke="white"
@@ -386,4 +419,3 @@ function Night({ id, from, to, thickness, path, point }: NightProps) {
     </>
   )
 }
-
