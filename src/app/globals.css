@@ -66,15 +66,13 @@
   line-height: 1.4;
   color: var(--fg);
   /* iOS Safari paints the strips behind its status bar and toolbar with the
-     root background colour. The sky starts at that colour and returns to it
-     under the toolbar, so both strips continue the page without an edge. */
+     root background colour. The sky starts at that colour, and on phones
+     returns to it just above the toolbar, so neither strip meets the page
+     with an edge. (The safe-area inset is 0 while the toolbar shows, so the
+     return can't be keyed to it.) */
+  --sky-return: 0px;
   background:
-    linear-gradient(
-      180deg,
-      var(--sky-top) 0,
-      var(--sky-bottom) calc(100% - env(safe-area-inset-bottom, 0px) * 3),
-      var(--sky-top) 100%
-    )
+    linear-gradient(180deg, var(--sky-top) 0, var(--sky-bottom) calc(100% - var(--sky-return)), var(--sky-top) 100%)
     fixed;
   background-color: var(--sky-top);
   transition:
@@ -90,6 +88,12 @@
 
 [data-sky='dark'] {
   --accent: oklch(0.68 0.19 30);
+}
+
+@media (pointer: coarse) {
+  :root {
+    --sky-return: 120px;
+  }
 }
 
 /* ─── Base ────────────────────────────────────────────────────────────── */
