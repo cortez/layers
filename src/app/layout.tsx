@@ -8,17 +8,17 @@ const OG_IMAGE = 'https://rstr.in/mo3ymucdlps90r/layers/4AE_JSn8R1L'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://layers.run'),
-  title: 'layers.run',
+  title: 'Layers',
   description,
   openGraph: {
     type: 'website',
     url: '/',
     siteName: 'layers.run',
-    title: 'layers.run',
+    title: 'Layers',
     description,
     images: [{ url: OG_IMAGE, width: 2400, height: 1260, alt: 'Layers, with running gear around it on a clear sky' }],
   },
-  twitter: { card: 'summary_large_image', title: 'layers.run', description, images: [OG_IMAGE] },
+  twitter: { card: 'summary_large_image', title: 'Layers', description, images: [OG_IMAGE] },
   icons: {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
