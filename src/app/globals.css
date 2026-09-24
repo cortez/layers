@@ -65,9 +65,18 @@
   font-size: 16px;
   line-height: 1.4;
   color: var(--fg);
-  /* iOS Safari tints the status bar and its toolbar with this one colour.
-     The sky (body::before) meets it at both ends of the screen. */
-  background-color: var(--sky-bottom);
+  /* iOS Safari paints the strips behind its status bar and toolbar with the
+     root background colour. The sky starts at that colour and returns to it
+     under the toolbar, so both strips continue the page without an edge. */
+  background:
+    linear-gradient(
+      180deg,
+      var(--sky-top) 0,
+      var(--sky-bottom) calc(100% - env(safe-area-inset-bottom, 0px) * 3),
+      var(--sky-top) 100%
+    )
+    fixed;
+  background-color: var(--sky-top);
   transition:
     --sky-top 1.5s ease,
     --sky-bottom 1.5s ease,
@@ -100,23 +109,6 @@ body {
 body {
   background: transparent;
   overscroll-behavior: none;
-}
-
-/* The sky: dark at the top, light at the horizon. Fixed so it never
-   scrolls, and starting from the horizon colour so it blends into the strip
-   iOS paints behind the status bar rather than meeting it with an edge. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    var(--sky-bottom) 0,
-    var(--sky-top) calc(env(safe-area-inset-top, 0px) * 1.6),
-    var(--sky-bottom) 100%
-  );
 }
 
 button,

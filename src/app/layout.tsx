@@ -33,9 +33,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   colorScheme: 'light dark',
-  // The horizon colour of the default sky (globals.css); the sky engine keeps
-  // this in step with the page once it's painted
-  themeColor: '#f1eee7',
 }
 
 const FONTS = 'https://cdn.cortez.io/fonts'
