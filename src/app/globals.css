@@ -92,7 +92,7 @@
 
 @media (pointer: coarse) {
   :root {
-    --sky-return: 120px;
+    --sky-return: 35%;
   }
 }
 
