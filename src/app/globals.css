@@ -216,16 +216,15 @@ button {
   justify-content: center;
 }
 
-/* The pill stays centred; the units switch hangs off its right side */
+/* The pill and the units switch centre together, as one group */
 .bar-center {
-  position: relative;
   display: flex;
+  gap: 8px;
+  min-width: 0;
 }
 
 .units-switch {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 0;
+  flex: none;
   width: 40px;
   height: 40px;
   border-radius: 50%;
