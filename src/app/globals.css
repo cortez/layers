@@ -199,6 +199,16 @@ button {
   padding: var(--gutter);
 }
 
+/* On phones the keyboard covers the lower half, where the results appear.
+   While searching, the pill rises to the top so it and every result stay
+   above the keyboard; it glides there and back as one shape. */
+@media (pointer: coarse) {
+  .locate:has(.pill[data-open]) {
+    align-items: start;
+    padding-top: calc(env(safe-area-inset-top) + 64px);
+  }
+}
+
 .results {
   display: grid;
   /* minmax(0, …) so the dial can't widen its own column and measure that */
