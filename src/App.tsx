@@ -76,7 +76,7 @@ export default function App() {
   const maxStart = MAX_HOURS_AHEAD - duration / 60
   const snap = (v: number) => snapHours(v, now, maxStart)
 
-  // The dial and swipes move `scrub` continuously; everything else follows its nearest detent
+  // The dial and horizontal trackpad scrolls move `scrub` continuously; everything else follows its nearest detent
   const scrub = useMotionValue(0)
   useMotionValueEvent(scrub, 'change', (v) => {
     const next = snap(v)
