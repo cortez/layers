@@ -59,7 +59,6 @@ export function saveUnits(units: Units) {
 
 export const toDisplayTemp = (f: number, units: Units) => (units === 'metric' ? ((f - 32) * 5) / 9 : f)
 export const toDisplaySpeed = (mph: number, units: Units) => (units === 'metric' ? mph * 1.609344 : mph)
-export const tempUnit = (units: Units) => (units === 'metric' ? 'C' : 'F')
 export const speedUnit = (units: Units) => (units === 'metric' ? ' km/h' : ' mph')
 
 /** Whether the device reads a 12-hour clock ("9:30 PM") or a 24-hour one ("21:30"). */

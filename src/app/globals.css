@@ -642,20 +642,6 @@ button {
 }
 
 
-.degrees {
-  display: inline-flex;
-  align-items: flex-start;
-}
-
-/* The unit, small beside the figure so it's always clear which scale this is */
-.degrees-unit {
-  font-size: 0.32em;
-  line-height: 1;
-  letter-spacing: 0;
-  margin: 0.55em 0 0 -0.04em;
-  opacity: 0.6;
-}
-
 .hub-window {
   display: flex;
   align-items: baseline;

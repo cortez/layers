@@ -2,7 +2,7 @@ import NumberFlow, { NumberFlowGroup } from '@number-flow/react'
 import { Morph } from './Morph'
 import { SPIN_TIMING } from '../lib/motion'
 import { clock } from '../lib/zone'
-import { speedUnit, tempUnit, toDisplaySpeed, toDisplayTemp, uses12Hour, type Units } from '../lib/units'
+import { speedUnit, toDisplaySpeed, toDisplayTemp, uses12Hour, type Units } from '../lib/units'
 
 // Numbers roll with NumberFlow; the words around them morph with TextMorph.
 
@@ -53,17 +53,9 @@ export function Duration({ minutes }: { minutes: number }) {
   )
 }
 
-/**
- * A temperature given in °F, shown in the runner's units. The unit is always
- * named: a bare "34°" reads as near freezing to someone expecting °F.
- */
+/** A temperature given in °F, shown in the runner's units. */
 export function Degrees({ value, units }: { value: number; units: Units }) {
-  return (
-    <span className="degrees">
-      <NumberFlow value={Math.round(toDisplayTemp(value, units))} suffix="°" spinTiming={SPIN} />
-      <span className="degrees-unit">{tempUnit(units)}</span>
-    </span>
-  )
+  return <NumberFlow value={Math.round(toDisplayTemp(value, units))} suffix="°" spinTiming={SPIN} />
 }
 
 /** A wind speed given in mph, shown in the runner's units. */
