@@ -199,7 +199,17 @@ export default function App() {
               style={{ ['--dial' as string]: `${dialSize}px`, ['--details-top' as string]: `${detailsTop(dialSize, shownItems)}px` }}
             >
               <header className="bar">
-                <PlaceButton place={place} leaving={leaving} onClick={changePlace} />
+                <div className="bar-center">
+                  <PlaceButton place={place} leaving={leaving} onClick={changePlace} />
+                  <motion.button
+                    className="units-switch"
+                    onClick={toggleUnits}
+                    aria-label={`Showing ${units === 'metric' ? 'Celsius' : 'Fahrenheit'}. Switch to ${units === 'metric' ? 'Fahrenheit' : 'Celsius'}`}
+                    {...changePlaceProps(leaving)}
+                  >
+                    <Morph>{units === 'metric' ? '°C' : '°F'}</Morph>
+                  </motion.button>
+                </div>
               </header>
 
               {/* Arrives in step with the pill so the whole change is one motion */}
@@ -237,7 +247,6 @@ export default function App() {
                     tomorrow={clock(start).day !== clock(now).day}
                     trend={trend}
                     units={units}
-                    onToggleUnits={toggleUnits}
                   />
                 </Dial>
               </motion.div>

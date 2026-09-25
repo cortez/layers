@@ -216,6 +216,33 @@ button {
   justify-content: center;
 }
 
+/* The pill stays centred; the units switch hangs off its right side */
+.bar-center {
+  position: relative;
+  display: flex;
+}
+
+.units-switch {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fill-strong);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.units-switch:active {
+  background: var(--press);
+  transition-duration: 0s;
+}
+
 .dial-wrap {
   grid-area: dial;
   margin-top: 28px;
@@ -610,38 +637,23 @@ button {
   letter-spacing: -0.04em;
   /* Proportional figures set tighter; NumberFlow animates the width change */
   font-variant-numeric: proportional-nums;
-  /* The degree sign hangs: the figures center on the dial, not the figures and the sign */
-  padding-left: 0.36em;
+  padding-left: 0.1em; /* the degree sign pulls the figure left */
   white-space: nowrap;
 }
 
 
-/* The temperature is a quiet button: tap to switch °F / °C */
 .degrees {
-  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
 }
 
-/*
- * The unit, small beside the figure so it's always clear which scale this
- * is. It hangs outside the layout, so the figure centers as it did without it.
- */
+/* The unit, small beside the figure so it's always clear which scale this is */
 .degrees-unit {
-  position: absolute;
-  left: calc(100% - 0.04em);
-  top: 0.55em;
   font-size: 0.32em;
   line-height: 1;
   letter-spacing: 0;
+  margin: 0.55em 0 0 -0.04em;
   opacity: 0.6;
-}
-
-.hub-temp-button {
-  pointer-events: auto;
-  font: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
-  border-radius: 12px;
-  cursor: pointer;
 }
 
 .hub-window {
