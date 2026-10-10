@@ -4,7 +4,7 @@ import './globals.css'
 
 const description = 'What to wear on your run, from the forecast for exactly when and where you’re going.'
 
-const OG_IMAGE = 'https://rstr.in/mo3ymucdlps90r/layers/4AE_JSn8R1L'
+const OG_IMAGE = 'https://rstr.in/mo3ymucdlps90r/layers/PQWJlkVVqxf'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://layers.run'),
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     siteName: 'layers.run',
     title: 'Layers',
     description,
-    images: [{ url: OG_IMAGE, width: 2400, height: 1260, alt: 'Layers, with running gear around it on a clear sky' }],
+    images: [{ url: OG_IMAGE, width: 857, height: 857, alt: 'A hand holding a phone showing Layers: a dial around the feels-like temperature, with the gear for the run listed below' }],
   },
   twitter: { card: 'summary_large_image', title: 'Layers', description, images: [OG_IMAGE] },
   icons: {
